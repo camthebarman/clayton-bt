@@ -37,10 +37,10 @@ const AgentClaude = (function () {
     return !!getKey();
   }
 
+  // The opening lines come from js/brand.js so a rename reaches the assistant
+  // too, rather than leaving it introducing itself as the previous owner.
   const SYSTEM = [
-    "You are the operations assistant for Clayton Boat Tours & Harborside B&B —",
-    "a bed and breakfast that also runs catering across a fleet of tour and charter boats.",
-    "You are answering questions from the owners and the staff who run it.",
+    ...Brand.assistantPreamble(),
     "",
     "Every question is about this operation's own data, given to you below as JSON:",
     "the catering program (ingredients, recipes, prepared batches and catering orders),",

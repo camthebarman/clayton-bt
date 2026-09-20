@@ -1,4 +1,4 @@
-# Clayton Boat Tours & Harborside B&B — Provisioning
+# Clayton Boat Tours — Provisioning
 
 One browser page for provisioning a small fleet. No build step, no server, no
 account: open `index.html` and it runs. Everything is saved in the browser's
@@ -182,6 +182,53 @@ it; nothing is stored anywhere but the browser, and the transcript is
 deliberately not persisted — yesterday's answers about yesterday's counts would
 only mislead.
 
+## Branding
+
+The whole identity lives in two files, and **nothing else in the app carries a
+colour or a company name**:
+
+| File | Holds |
+| --- | --- |
+| `css/brand.css` | Every colour, the type stack, the shape tokens, and the three `--mark-*` colours the logo is drawn from. `styles.css` states no colour of its own — it works entirely in these tokens. |
+| `js/brand.js` | The name, the tagline, the browser title, the module glyphs, the place and the water, and the one-sentence brief the Ask tab hands to Claude. |
+
+Swapping those two files re-skins every tab, the pills, the masthead mark, the
+favicon, the front page's opening line and the assistant's own introduction
+together. There is no third place to remember.
+
+### Where the palette comes from
+
+Clayton sits on the St. Lawrence at the head of the Thousand Islands, and it is
+the home of the Antique Boat Museum. So the source material is not generic
+nautical navy — it is a varnished mahogany hull with brass hardware, on
+green-blue river water, against a white transom and the pink-grey granite of
+the Frontenac Arch.
+
+That gives the interface its one structural idea: **cool surfaces, warm
+accents.** The paper is river haze; the money, the metal and the wood are warm.
+Each tool takes its colour from the same dock:
+
+| | |
+| --- | --- |
+| House | `#0f4a5f` — the St. Lawrence channel |
+| Catering | `#2b6a52` — island pine |
+| Bar | `#8a4523` — varnished mahogany |
+| Fleet | `#0f4a5f` — the river; the fleet is the spine, so it carries the house colour |
+| Ask | `#41566b` — Frontenac granite |
+| Accent | `#8f6724` — brass hardware |
+
+Every foreground/background pair meets WCAG AA (4.5:1) on text, including the
+status pills, the hold badges and the softened row washes. The measured ratios
+are in the comments in `brand.css`; if you change a colour, re-check it.
+
+### The mark
+
+A launch hull with a brass sheer stripe, on her own wake. It is drawn as inline
+SVG by `brand.js` from the `--mark-*` tokens, so it re-colours with the palette
+instead of going stale, and it serves as both the masthead mark and the
+favicon. A hull stays legible at 16px in a browser tab; a castle or a
+lighthouse would not.
+
 ## Data
 
 Each tool keeps its own key, so resetting one never touches another:
@@ -207,7 +254,9 @@ always reads as a live week.
 
 ```
 index.html            the shell: masthead, section bar, every panel's container
-css/styles.css        one design system; each tool restates --brand on its wrapper
+css/brand.css         the identity: every colour, the type stack, the mark
+css/styles.css        one design system, stated entirely in brand.css's tokens
+js/brand.js           the name, the tagline, the glyphs, the logo, the favicon
 js/core.js            shared helpers: DOM building, the one modal, the one toast
 js/fleet/storage.js   locations, boats and transfers — loads first, because every
                       quantity map in the app is keyed by the locations it defines

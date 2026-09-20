@@ -3,7 +3,10 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Clayton Boat Tours &amp; Harborside B&amp;B — Provisioning</title>
+<title>Clayton Boat Tours — Provisioning</title>
+<!-- brand.css owns every colour and the type stack; styles.css states none of
+     its own. It loads first so the tokens exist before anything uses them. -->
+<link rel="stylesheet" href="css/brand.css" />
 <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
@@ -11,10 +14,12 @@
   <header class="house-header">
     <div class="house-header-inner">
       <div class="house-brand">
+        <!-- js/brand.js replaces the initials with the mark and fills the
+             name and tagline from its config; these are the fallbacks. -->
         <span class="house-mark">CBT</span>
         <div>
-          <h1>Clayton Boat Tours &amp; Harborside B&amp;B</h1>
-          <p class="tagline">Fleet provisioning, catering &amp; bar</p>
+          <h1>Clayton Boat Tours</h1>
+          <p class="tagline">Fleet provisioning · catering · Harborside B&amp;B</p>
         </div>
       </div>
       <div class="house-clock" id="house-clock"></div>
@@ -165,6 +170,7 @@
 
   <div id="toast" class="toast" hidden></div>
 
+  <script src="js/brand.js"></script>
   <script src="js/core.js"></script>
 
   <!-- Fleet's storage defines the locations every quantity map is keyed by,

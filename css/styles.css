@@ -1,50 +1,16 @@
 /* styles.css — one design system for all three tools.
 
-   The shell (masthead + section bar + house dashboard) is warm neutral.
-   Each tool restates --brand on its own .mod-* wrapper, so Catering reads
-   green, Bar reads amber and Fleet reads teal without three separate
-   stylesheets fighting each other. Light theme only.
+   This file states no colours of its own. Every colour, the type stack and
+   the mark all live in css/brand.css, which loads first; everything here
+   works in those tokens. That is what makes the app re-brandable by editing
+   one stylesheet and one config object instead of grepping for hexes.
 
    The components below the shared base are almost all about one thing:
    showing the same quantity in several places at once without the page
-   turning into a spreadsheet nobody can read. */
+   turning into a spreadsheet nobody can read. Light theme only. */
 
 
-:root {
-  --bg: #f5f3ef;
-  --surface: #ffffff;
-  --surface-alt: #eeeae2;
-  --border: #ddd7cb;
-  --ink: #23201b;
-  --ink-soft: #675f53;
-  --brand: #7a5c2e;
-  --brand-dark: #5c4421;
-  --accent: #b3541e;
-  --danger: #b3261e;
-  --danger-bg: #fbe9e7;
-  --good: #2f7d4f;
-  --good-bg: #e6f2ea;
-  --warn: #9a6a06;
-  --warn-bg: #fbf1de;
-  --radius: 10px;
-  --shadow: 0 1px 3px rgba(31, 42, 34, 0.08), 0 1px 2px rgba(31, 42, 34, 0.06);
-  --accent-soft: #f3efe7;
-
-  /* Stock-state colors, shared by both programs' count sheets */
-  --afloat: #1d6b60;
-  --afloat-bg: #e4f0ee;
-  --hub: #4a4a8c;
-  --hub-bg: #eaeaf5;
-  --chill: #2f6b8f;
-  --chill-bg: #e6eff5;
-  --frozen: #3b5f9e;
-  --frozen-bg: #e8edf7;
-  --hot: #a8442a;
-  --hot-bg: #f9e9e4;
-
-  color-scheme: light;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-}
+/* Every token this file uses is defined in css/brand.css. */
 
 * { box-sizing: border-box; }
 
@@ -94,7 +60,7 @@ p { margin: 0 0 .6em; }
   cursor: pointer;
 }
 .tab-btn:hover { background: var(--surface-alt); }
-.tab-btn.active { background: var(--brand); color: #fff; }
+.tab-btn.active { background: var(--brand); color: var(--on-brand); }
 
 .header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
@@ -112,7 +78,7 @@ p { margin: 0 0 .6em; }
   gap: 6px;
 }
 .btn:hover { background: var(--surface-alt); }
-.btn-primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+.btn-primary { background: var(--brand); border-color: var(--brand); color: var(--on-brand); }
 .btn-primary:hover { background: var(--brand-dark); }
 .btn-ghost { background: transparent; }
 .btn.danger, .btn-ghost.danger { color: var(--danger); border-color: var(--danger-bg); }
@@ -195,8 +161,8 @@ thead th {
 tbody td { padding: 9px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
 tbody tr:last-child td { border-bottom: none; }
 tbody tr:hover { background: var(--surface-alt); }
-tbody tr.row-warn { background: var(--warn-bg); }
-tbody tr.row-bad { background: var(--danger-bg); }
+tbody tr.row-warn { background: var(--row-warn); }
+tbody tr.row-bad { background: var(--row-bad); }
 .table-wrap { overflow-x: auto; }
 .num { text-align: right; font-variant-numeric: tabular-nums; }
 .muted { color: var(--ink-soft); }
@@ -238,7 +204,7 @@ tbody tr.row-bad { background: var(--danger-bg); }
   box-shadow: var(--shadow);
 }
 .chip:hover { background: var(--surface-alt); }
-.chip.active { background: var(--brand); border-color: var(--brand); color: #fff; }
+.chip.active { background: var(--brand); border-color: var(--brand); color: var(--on-brand); }
 
 /* Forms */
 .field { margin-bottom: 12px; }
@@ -368,8 +334,8 @@ table select {
   bottom: 22px;
   left: 50%;
   transform: translateX(-50%);
-  background: #1f2a22;
-  color: #fff;
+  background: var(--toast-bg);
+  color: var(--on-brand);
   padding: 10px 18px;
   border-radius: 8px;
   font-size: 13.5px;
@@ -456,12 +422,15 @@ table select {
   flex-wrap: wrap;
 }
 .house-brand { display: flex; align-items: center; gap: 12px; }
+/* js/brand.js draws the mark as inline SVG from the --mark-* tokens, so the
+   logo re-colours with the palette. The text fallback below is what shows if
+   that script is missing. */
 .house-mark {
   width: 42px;
   height: 42px;
   border-radius: 10px;
   background: var(--brand);
-  color: #fff;
+  color: var(--on-brand);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -469,6 +438,7 @@ table select {
   font-weight: 800;
   letter-spacing: .02em;
   flex: none;
+  overflow: hidden;
 }
 .house-brand h1 {
   margin: 0;
@@ -530,35 +500,11 @@ table select {
   .house-clock { display: none; }
 }
 
-/* Each tool lives in its own module wrapper, which restates the accent color
-   so the three tools stay visually distinct without three stylesheets. */
+/* Each tool lives in its own module wrapper, which restates --brand so the
+   three stay visually distinct without three stylesheets. The values are in
+   css/brand.css with the rest of the identity. */
 .module { display: none; }
 .module.active { display: block; }
-
-.mod-catering {
-  --brand: #2f7d4f;
-  --brand-dark: #23603c;
-  --accent: #b3541e;
-  --good: #2f7d4f;
-  --good-bg: #e6f2ea;
-}
-.mod-bar {
-  --brand: #b3541e;
-  --brand-dark: #8a3f15;
-  --accent: #2f6b4f;
-  --good: #2f6b4f;
-  --good-bg: #e8f2ea;
-}
-.mod-fleet {
-  --brand: #1d6b60;
-  --brand-dark: #14524a;
-  --accent: #b3541e;
-  --good: #2f6b4f;
-  --good-bg: #e8f2ea;
-}
-.mod-catering .section-btn.active,
-.mod-bar .section-btn.active,
-.mod-fleet .section-btn.active { border-bottom-color: var(--brand); }
 
 /* The tool's own tab strip (Ingredients / Recipes / Prepared / …). */
 .module-bar {
@@ -648,12 +594,6 @@ table select {
    ASK — the chat tab
    ============================================================ */
 
-.mod-agent {
-  --brand: #4a4a8c;
-  --brand-dark: #383870;
-  --accent: #b3541e;
-}
-
 .chat-log {
   min-height: 46vh;
   max-height: 62vh;
@@ -702,7 +642,7 @@ table select {
 .chat-user .chat-body {
   background: var(--brand);
   border-color: var(--brand);
-  color: #fff;
+  color: var(--on-brand);
   border-bottom-right-radius: 4px;
 }
 .chat-assistant .chat-body { border-bottom-left-radius: 4px; }
@@ -805,14 +745,14 @@ table select {
 .scope-chip.active {
   background: var(--brand);
   border-color: var(--brand);
-  color: #fff;
+  color: var(--on-brand);
 }
 .scope-chip.master {
   border-style: dashed;
   border-color: var(--brand);
   color: var(--brand);
 }
-.scope-chip.master.active { border-style: solid; color: #fff; }
+.scope-chip.master.active { border-style: solid; color: var(--on-brand); }
 
 /* ---------- the master grid ---------- */
 /* One row per item, one column per location, the total beside them. The

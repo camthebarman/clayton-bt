@@ -44,8 +44,18 @@
     ]);
   }
 
+  // A tool card wears its tool's own colour. Reading it off that module's
+  // wrapper rather than repeating a hex here keeps css/brand.css the only
+  // place any colour in this app is stated.
+  function moduleAccent(name) {
+    const node = document.getElementById("mod-" + name);
+    if (!node) return "var(--brand)";
+    const v = getComputedStyle(node).getPropertyValue("--brand").trim();
+    return v || "var(--brand)";
+  }
+
   function toolCard(opts) {
-    return el("button", { class: "tool-card", style: `--card-accent:${opts.accent}`, onclick: () => showModule(opts.module) }, [
+    return el("button", { class: "tool-card", style: `--card-accent:${moduleAccent(opts.module)}`, onclick: () => showModule(opts.module) }, [
       el("div", { class: "tool-card-head" }, [
         el("span", { class: "mark" }, [opts.mark]),
         el("div", {}, [el("h3", {}, [opts.title]), el("div", { class: "sub" }, [opts.sub])]),
@@ -127,7 +137,7 @@
 
     panel.innerHTML = "";
     panel.append(el("div", { class: "hero" }, [
-      el("h2", {}, ["Clayton Boat Tours & Harborside B&B"]),
+      el("h2", {}, [Brand.heroTitle]),
       el("p", { class: "sub" }, [
         `Everything below is live from the three tools behind this page — what the kitchen has made, what every bar is carrying, and where all of it is sitting across ${fleet.vessels} boats and ${fleet.locations} locations.`,
       ]),
@@ -142,7 +152,7 @@
 
     panel.append(el("div", { class: "tool-grid" }, [
       toolCard({
-        module: "catering", accent: "#2f7d4f", mark: "🍽️", title: "Catering",
+        module: "catering", mark: Brand.marks.catering, title: "Catering",
         sub: "Costs, prepared food, orders",
         metrics: [
           ["Dishes", cat.dishes],
@@ -152,7 +162,7 @@
         ],
       }),
       toolCard({
-        module: "bar", accent: "#b3541e", mark: "🍸", title: "Bar",
+        module: "bar", mark: Brand.marks.bar, title: "Bar",
         sub: `Pour costs across ${bar.bars} bars`,
         metrics: [
           ["Drinks", bar.drinks],
@@ -162,7 +172,7 @@
         ],
       }),
       toolCard({
-        module: "fleet", accent: "#1d6b60", mark: "⚓", title: "Fleet",
+        module: "fleet", mark: Brand.marks.fleet, title: "Fleet",
         sub: "Locations, transfers, master roll-up",
         metrics: [
           ["Boats", fleet.vessels],
@@ -224,6 +234,7 @@
   }
 
   Core.ready(function () {
+    Brand.apply();
     Core.init();
 
     document.getElementById("section-tabs").addEventListener("click", (e) => {
