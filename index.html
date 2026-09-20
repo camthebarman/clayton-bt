@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Clayton Boat Tours &amp; Harborside B&amp;B — Provisioning</title>
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div class="house-top">
+  <header class="house-header">
+    <div class="house-header-inner">
+      <div class="house-brand">
+        <span class="house-mark">CBT</span>
+        <div>
+          <h1>Clayton Boat Tours &amp; Harborside B&amp;B</h1>
+          <p class="tagline">Fleet provisioning, catering &amp; bar</p>
+        </div>
+      </div>
+      <div class="house-clock" id="house-clock"></div>
+    </div>
+  </header>
+
+  <nav class="section-tabs">
+    <div class="section-tabs-inner" id="section-tabs">
+      <button class="section-btn active" data-module="dashboard">Dashboard</button>
+      <button class="section-btn" data-module="catering">Catering</button>
+      <button class="section-btn" data-module="bar">Bar</button>
+      <button class="section-btn" data-module="fleet">Fleet</button>
+      <button class="section-btn" data-module="agent">Ask</button>
+    </div>
+  </nav>
+  </div>
+
+  <main class="app-main">
+
+    <!-- ============ HOUSE DASHBOARD ============ -->
+    <section id="mod-dashboard" class="module active"></section>
+
+    <!-- ============ CATERING ============ -->
+    <section id="mod-catering" class="module mod-catering">
+      <div class="module-bar">
+        <div class="module-title">
+          <span class="brand-mark">🍽️</span>
+          <div>
+            <h2>Catering</h2>
+            <p class="tagline">Costs, prepared food, counts &amp; orders</p>
+          </div>
+        </div>
+        <nav class="tabs">
+          <button class="tab-btn active" data-tab="dashboard">Overview</button>
+          <button class="tab-btn" data-tab="ingredients">Ingredients</button>
+          <button class="tab-btn" data-tab="recipes">Recipes</button>
+          <button class="tab-btn" data-tab="prepared">Prepared</button>
+          <button class="tab-btn" data-tab="inventory">Inventory</button>
+          <button class="tab-btn" data-tab="orders">Orders</button>
+          <button class="tab-btn" data-tab="usage">Usage</button>
+        </nav>
+        <div class="header-actions">
+          <button class="btn btn-ghost danger" id="catering-btn-reset">Reset Data</button>
+        </div>
+      </div>
+
+      <section id="catering-panel-dashboard" class="panel active"></section>
+      <section id="catering-panel-ingredients" class="panel"></section>
+      <section id="catering-panel-recipes" class="panel"></section>
+      <section id="catering-panel-prepared" class="panel"></section>
+      <section id="catering-panel-inventory" class="panel"></section>
+      <section id="catering-panel-orders" class="panel"></section>
+      <section id="catering-panel-usage" class="panel"></section>
+    </section>
+
+    <!-- ============ BAR ============ -->
+    <section id="mod-bar" class="module mod-bar">
+      <div class="module-bar">
+        <div class="module-title">
+          <span class="brand-mark">🍸</span>
+          <div>
+            <h2>Bar</h2>
+            <p class="tagline">Pour costs, house preps &amp; counts, every bar</p>
+          </div>
+        </div>
+        <nav class="tabs">
+          <button class="tab-btn active" data-tab="dashboard">Overview</button>
+          <button class="tab-btn" data-tab="ingredients">Ingredients</button>
+          <button class="tab-btn" data-tab="preps">Preps</button>
+          <button class="tab-btn" data-tab="glassware">Glassware</button>
+          <button class="tab-btn" data-tab="recipes">Drinks</button>
+          <button class="tab-btn" data-tab="inventory">Inventory</button>
+          <button class="tab-btn" data-tab="usage">Usage</button>
+        </nav>
+        <div class="header-actions">
+          <button class="btn btn-ghost danger" id="bar-btn-reset">Reset Data</button>
+        </div>
+      </div>
+
+      <section id="bar-panel-dashboard" class="panel active"></section>
+      <section id="bar-panel-ingredients" class="panel"></section>
+      <section id="bar-panel-preps" class="panel"></section>
+      <section id="bar-panel-glassware" class="panel"></section>
+      <section id="bar-panel-recipes" class="panel"></section>
+      <section id="bar-panel-inventory" class="panel"></section>
+      <section id="bar-panel-usage" class="panel"></section>
+    </section>
+
+    <!-- ============ FLEET ============ -->
+    <section id="mod-fleet" class="module mod-fleet">
+      <div class="module-bar">
+        <div class="module-title">
+          <span class="brand-mark">⚓</span>
+          <div>
+            <h2>Fleet</h2>
+            <p class="tagline">Boats, locations, transfers &amp; the master roll-up</p>
+          </div>
+        </div>
+        <nav class="tabs">
+          <button class="tab-btn active" data-tab="master">Master</button>
+          <button class="tab-btn" data-tab="locations">Boats &amp; Locations</button>
+          <button class="tab-btn" data-tab="transfers">Transfers</button>
+        </nav>
+        <div class="header-actions">
+          <button class="btn btn-ghost danger" id="fleet-btn-reset">Reset Data</button>
+        </div>
+      </div>
+
+      <section id="fleet-panel-master" class="panel active"></section>
+      <section id="fleet-panel-locations" class="panel"></section>
+      <section id="fleet-panel-transfers" class="panel"></section>
+    </section>
+
+    <!-- ============ ASK ============ -->
+    <section id="mod-agent" class="module mod-agent">
+      <div class="module-bar">
+        <div class="module-title">
+          <span class="brand-mark">💬</span>
+          <div>
+            <h2>Ask</h2>
+            <p class="tagline" id="agent-mode">Built-in answers. Connect Claude for open-ended questions.</p>
+          </div>
+        </div>
+        <div class="header-actions" style="margin-left:auto">
+          <button class="btn btn-ghost" id="agent-connect">Connect Claude</button>
+          <button class="btn btn-ghost" id="agent-clear">Clear</button>
+        </div>
+      </div>
+
+      <div class="chat-log" id="agent-log"></div>
+
+      <form class="chat-composer" id="agent-form" autocomplete="off">
+        <input type="text" id="agent-input" placeholder="What's going off today? What's on the Belle? What do I need to order?" aria-label="Ask a question" />
+        <button type="submit" class="btn btn-primary" id="agent-send">Ask</button>
+      </form>
+    </section>
+  </main>
+
+  <div id="modal-overlay" class="modal-overlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <h2 id="modal-title">Title</h2>
+        <button class="modal-close" id="modal-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="js/core.js"></script>
+
+  <!-- Fleet's storage defines the locations every quantity map is keyed by,
+       so it has to load before the two programs that use those keys. -->
+  <script src="js/fleet/storage.js"></script>
+
+  <script src="js/catering/calc.js"></script>
+  <script src="js/catering/storage.js"></script>
+  <script src="js/catering/app.js"></script>
+
+  <script src="js/bar/calc.js"></script>
+  <script src="js/bar/storage.js"></script>
+  <script src="js/bar/app.js"></script>
+
+  <script src="js/fleet/app.js"></script>
+
+  <script src="js/agent/engine.js"></script>
+  <script src="js/agent/claude.js"></script>
+  <script src="js/agent/app.js"></script>
+
+  <script src="js/shell.js"></script>
+</body>
+</html>
