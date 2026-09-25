@@ -288,6 +288,7 @@ const BarCalc = (function () {
 
   function pluralize(w) {
     if (/[^aeiou]y$/i.test(w)) return w.slice(0, -1) + "ies";
+    if (/(oa|ea|l)f$/i.test(w)) return w.slice(0, -1) + "ves";
     if (/(s|x|z|ch|sh)$/i.test(w)) return w + "es";
     return w + "s";
   }

@@ -1,6 +1,5 @@
-/* core.js — helpers every tool shares: DOM building, the one modal, the one
-   toast. Each tool keeps its own state and its own storage key; all they
-   borrow from here is plumbing. */
+/* core.js — plumbing every page shares: DOM building, the one modal, the
+   one toast, and handing the browser a file to save. */
 
 const Core = (function () {
   function el(tag, attrs, children) {
@@ -9,6 +8,7 @@ const Core = (function () {
       if (v == null || v === false) return;
       if (k === "class") node.className = v;
       else if (k === "html") node.innerHTML = v;
+      else if (k === "value" && "value" in node) node.value = v;
       else if (k.startsWith("on") && typeof v === "function") node.addEventListener(k.slice(2), v);
       else node.setAttribute(k, v);
     });
@@ -27,14 +27,17 @@ const Core = (function () {
   }
 
   // ---------- modal ----------
-  // One modal element serves all three tools; whichever one opens it owns the
-  // body until it closes.
-  function openModal(title, renderFn) {
+  // One modal element serves every page; whichever opens it owns the body
+  // until it closes. `opts.wide` gives editors with a components table room.
+  function openModal(title, renderFn, opts) {
     document.getElementById("modal-title").textContent = title;
+    document.getElementById("modal").classList.toggle("wide", !!(opts && opts.wide));
     const body = document.getElementById("modal-body");
     body.innerHTML = "";
     renderFn(body, closeModal);
     document.getElementById("modal-overlay").hidden = false;
+    const first = body.querySelector("input:not([type=hidden]), select, textarea");
+    if (first && !(opts && opts.noFocus)) setTimeout(() => first.focus(), 30);
   }
   function closeModal() {
     document.getElementById("modal-overlay").hidden = true;
@@ -50,8 +53,8 @@ const Core = (function () {
     toastTimer = setTimeout(() => { t.hidden = true; }, 2200);
   }
 
-  // Hands the browser a file to save. The only thing that uses it is the
-  // kitchen's printable prep sheet — plain text, not a data export.
+  // Hands the browser a file to save — the order sheets and event sheets,
+  // plain text rather than a data export.
   function downloadText(text, filename, mime) {
     const blob = new Blob([text], { type: mime || "text/plain" });
     const url = URL.createObjectURL(blob);
@@ -62,6 +65,13 @@ const Core = (function () {
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text).then(() => true, () => false);
+    }
+    return Promise.resolve(false);
   }
 
   function uid(prefix) {
@@ -78,8 +88,10 @@ const Core = (function () {
     document.getElementById("modal-overlay").addEventListener("click", (e) => {
       if (e.target.id === "modal-overlay") closeModal();
     });
-    document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModal(); });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !document.getElementById("modal-overlay").hidden) closeModal();
+    });
   }
 
-  return { el, openModal, closeModal, toast, downloadText, uid, ready, init };
+  return { el, openModal, closeModal, toast, downloadText, copyText, uid, ready, init };
 })();

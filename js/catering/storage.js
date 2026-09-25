@@ -22,15 +22,6 @@ const CateringStorage = (function () {
     "Pantry", "Spice", "Packaging",
   ];
 
-  // How a prepared batch is held once the kitchen has made it. This is the
-  // difference between "good for a week" and "get it on the boat by ten".
-  const HOLDS = {
-    chilled: { label: "Chilled", note: "Walk-in / reach-in, 38°F" },
-    frozen: { label: "Frozen", note: "Blast then hold, 0°F" },
-    hot: { label: "Hot hold", note: "Cambro or holding cabinet, 140°F+" },
-    ambient: { label: "Ambient", note: "Dry, room temperature" },
-  };
-
   // ---- Ingredients ----
   function seedIngredients() {
     return [
@@ -181,10 +172,9 @@ const CateringStorage = (function () {
   // ---- Recipes ----
   // `portions` is the batch yield: component quantities are per BATCH.
   //
-  // `prepAhead` marks the things the kitchen produces before service rather
-  // than to order. Those carry a default hold and shelf life, which every
-  // batch logged against the recipe inherits. That flag is what puts a dish
-  // on the Prepared tab instead of only on the Recipes tab.
+  // `menuPrice` and `servingsPerWeek` together are what the headline food
+  // cost is weighted by. The prepAhead / hold / panNote fields are kept as
+  // kitchen notes; nothing is scheduled off them any more.
   function seedRecipes() {
     const g = CateringCalc.uid;
     return [
@@ -470,47 +460,11 @@ const CateringStorage = (function () {
     ];
   }
 
-  // ---- Prepared batches ----
-  // One entry is one production run. `portions` is a per-location map, because
-  // a batch made Thursday morning is routinely split across the kitchen's
-  // walk-in and two boats by Thursday afternoon.
-  function seedBatches() {
-    // Dates are relative to load so the seeded board always reads as a live
-    // week rather than an expired one from whenever this was written.
-    const day = (offset) => {
-      const d = new Date();
-      d.setDate(d.getDate() + offset);
-      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-    };
-    return [
-      { id: "prep_b_chicken_salad", sinceVersion: 1, recipeId: "crec_chicken_salad", producedOn: day(-1), shelfLifeDays: 2, hold: "chilled",
-        portions: { loc_kitchen: 46, loc_belle_galley: 18 }, notes: "6 qt Cambro, labelled. Croissants get filled in the morning." },
-      { id: "prep_b_caprese", sinceVersion: 1, recipeId: "crec_caprese_orzo", producedOn: day(-1), shelfLifeDays: 3, hold: "chilled",
-        portions: { loc_kitchen: 32, loc_belle_galley: 24, loc_clayton_galley: 8 }, notes: "Two half pans plus the boat splits." },
-      { id: "prep_b_turkey_wrap", sinceVersion: 1, recipeId: "crec_turkey_wrap", producedOn: day(0), shelfLifeDays: 2, hold: "chilled",
-        portions: { loc_kitchen: 24, loc_belle_galley: 12 }, notes: "Rolled this morning, cut on the bias." },
-      { id: "prep_b_harvest", sinceVersion: 1, recipeId: "crec_harvest_bowl", producedOn: day(-2), shelfLifeDays: 3, hold: "chilled",
-        portions: { loc_kitchen: 14, loc_belle_galley: 6 }, notes: "Dressing cups packed alongside. Goes off tomorrow." },
-      { id: "prep_b_lemon_loaf", sinceVersion: 1, recipeId: "crec_lemon_loaf", producedOn: day(-2), shelfLifeDays: 4, hold: "ambient",
-        portions: { loc_kitchen: 26, loc_belle_galley: 20, loc_clayton_galley: 6 }, notes: "Sunday bake. Sliced as it goes out." },
-      { id: "prep_b_pot_creme", sinceVersion: 1, recipeId: "crec_pot_de_creme", producedOn: day(-1), shelfLifeDays: 4, hold: "chilled",
-        portions: { loc_kitchen: 36, loc_duchess_galley: 18 }, notes: "Jars set overnight. Duchess has tonight's covered." },
-      { id: "prep_b_wild_rice", sinceVersion: 1, recipeId: "crec_wild_rice", producedOn: day(0), shelfLifeDays: 2, hold: "hot",
-        portions: { loc_kitchen: 40 }, notes: "Full pan, holding at 145. Goes down to the boat at 4:30." },
-      { id: "prep_b_green_beans", sinceVersion: 1, recipeId: "crec_green_beans", producedOn: day(0), shelfLifeDays: 2, hold: "chilled",
-        portions: { loc_kitchen: 40 }, notes: "Blanched and shocked. Finished afloat." },
-      { id: "prep_b_garden_salad", sinceVersion: 1, recipeId: "crec_garden_salad", producedOn: day(0), shelfLifeDays: 2, hold: "chilled",
-        portions: { loc_kitchen: 24, loc_duchess_galley: 24 }, notes: "Dressing in a quart, packed separately." },
-      { id: "prep_b_blini_old", sinceVersion: 1, recipeId: "crec_salmon_blini", producedOn: day(-2), shelfLifeDays: 1, hold: "chilled",
-        portions: { loc_clayton_galley: 12 }, notes: "Left over from Wednesday's charter — past date, pull it." },
-    ];
-  }
-
-  // ---- Catering orders ----
-  // Every piece of paid food service is an order, including the standing
-  // preplanned lunch runs. `serviceType` is the only thing that separates a
-  // wedding charter from Tuesday's tour boxes, and `recurring` marks the ones
-  // that come back every week without a new booking.
+  // ---- Catering events ----
+  // Every piece of food service is an event, including the standing
+  // preplanned lunch runs. `locationId` is where it is served; it only
+  // decides which fridge is tried first when stock is pulled. `pull` records
+  // exactly what was deducted from which location, so it can be undone.
   function seedOrders() {
     const g = CateringCalc.uid;
     const day = (offset) => {
@@ -617,7 +571,6 @@ const CateringStorage = (function () {
     return {
       ingredients: seedIngredients(),
       recipes: seedRecipes(),
-      batches: seedBatches(),
       orders: seedOrders(),
       settings: {
         defaultTargetFoodCostPct: 26,
@@ -656,7 +609,9 @@ const CateringStorage = (function () {
     s.settings = s.settings || {};
     if (s.settings.defaultTargetFoodCostPct == null) s.settings.defaultTargetFoodCostPct = 26;
     if (s.settings.defaultOveragePct == null) s.settings.defaultOveragePct = 10;
-    s.batches = s.batches || [];
+    // Prepared batches were retired in the redesign; catering now pulls raw
+    // stock straight from whichever fridge has it.
+    delete s.batches;
     s.orders = s.orders || [];
 
     s.ingredients.forEach((i) => {
@@ -674,17 +629,16 @@ const CateringStorage = (function () {
       if (r.shelfLifeDays == null) r.shelfLifeDays = 2;
       r.components = r.components || [];
     });
-    s.batches.forEach((b) => {
-      b.portions = asQtyMap(b.portions);
-      if (!b.hold) b.hold = "chilled";
-      if (b.shelfLifeDays == null) b.shelfLifeDays = 2;
-    });
     s.orders.forEach((o) => {
       o.lines = o.lines || [];
       o.supplies = o.supplies || [];
       if (!o.pricingMode) o.pricingMode = "perGuest";
       if (o.pricePerGuest == null) o.pricePerGuest = 0;
       if (!o.status) o.status = "confirmed";
+      // The old prep/delivery states collapse into the simpler set.
+      if (o.status === "prepped") o.status = "confirmed";
+      if (o.status === "delivered") o.status = "completed";
+      if (o.pull === undefined) o.pull = null;
       if (!o.serviceType) o.serviceType = "Catering";
       if (o.vesselId === undefined) o.vesselId = null;
     });
@@ -722,5 +676,5 @@ const CateringStorage = (function () {
     return s;
   }
 
-  return { load, save, resetToDefaults, defaultState, normalize, isValid, KEY, MENUS, CATEGORIES, HOLDS };
+  return { load, save, resetToDefaults, defaultState, normalize, isValid, KEY, MENUS, CATEGORIES };
 })();
