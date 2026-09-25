@@ -7,15 +7,12 @@
 
    So every quantity in the catering and bar programs is a map keyed by
    location id, and every roll-up in the app is a sum over that map. This file
-   owns the list of places those keys refer to, plus the transfer tickets that
-   move stock between them.
+   owns the list of places those keys refer to.
 
    Locations have two properties the rest of the app reasons about:
      holds    which programs stock the place — "food", "bev", or both.
-     canCook  whether food can actually be produced there. The B&B kitchen can.
-              A boat galley holds, finishes and plates what the kitchen sent;
-              it cannot turn raw chicken into chicken salad mid-river. That one
-              flag is why the Prepared tab exists. */
+     canCook  whether food can actually be produced there. The B&B kitchen can;
+              a boat galley holds, finishes and plates what the kitchen sent. */
 
 const FleetStorage = (function () {
   const KEY = "ctb.fleet.v1";
@@ -34,8 +31,8 @@ const FleetStorage = (function () {
   }
 
   // ---- Locations ----
-  // Order matters: the commissary is first because it is the hub every
-  // transfer starts from, and the app leans on that in a dozen pickers.
+  // Order matters: it is the order locations appear in every filter and
+  // column, so the commissary and kitchen lead and the boats follow.
   function seedLocations() {
     return [
       {
@@ -46,7 +43,7 @@ const FleetStorage = (function () {
       {
         id: "loc_kitchen", sinceVersion: 1, name: "B&B Kitchen", short: "Kitchen",
         kind: "kitchen", vesselId: null, holds: ["food"], canCook: true, hub: false,
-        notes: "The only production kitchen. Every prepared batch in the program is made here.",
+        notes: "The only production kitchen. Most catering pulls come from its walk-in.",
       },
       {
         id: "loc_porchbar", sinceVersion: 1, name: "Porch Bar", short: "Porch Bar",
@@ -97,46 +94,10 @@ const FleetStorage = (function () {
     ];
   }
 
-  // ---- Transfers ----
-  // A transfer is a ticket: a list of lines leaving one location for another.
-  // It does nothing to stock until it is received — a case that left the
-  // commissary but hasn't been checked onto the boat is still the
-  // commissary's, and "in transit" is exactly the state a provisioning list
-  // needs to show.
-  function seedTransfers() {
-    return [
-      {
-        id: "tr_seed_duchess", sinceVersion: 1, ref: "TR-1041",
-        fromLocId: "loc_commissary", toLocId: "loc_duchess_bar",
-        status: "sent", createdOn: "2026-09-19", receivedOn: null,
-        notes: "Saturday sunset cruise build. Runner takes it down at 3.",
-        lines: [
-          { id: "trl_1", module: "bar", itemId: "bing_vodka", qty: 3 },
-          { id: "trl_2", module: "bar", itemId: "bing_gin", qty: 2 },
-          { id: "trl_3", module: "bar", itemId: "bing_lime_juice", qty: 128 },
-          { id: "trl_4", module: "bar", itemId: "bing_tonic", qty: 96 },
-        ],
-      },
-      {
-        id: "tr_seed_belle", sinceVersion: 1, ref: "TR-1042",
-        fromLocId: "loc_kitchen", toLocId: "loc_belle_galley",
-        status: "draft", createdOn: "2026-09-20", receivedOn: null,
-        notes: "Noon tour boxed lunches. Batch has to be pulled from the cooler at 10:30.",
-        lines: [
-          { id: "trl_5", module: "catering", itemId: "prep_b_chicken_salad", qty: 40, kind: "prepared" },
-          { id: "trl_6", module: "catering", itemId: "cing_togo_box", qty: 40 },
-          { id: "trl_7", module: "catering", itemId: "cing_cutlery_kit", qty: 40 },
-        ],
-      },
-    ];
-  }
-
   function defaultState() {
     return {
       vessels: seedVessels(),
       locations: seedLocations(),
-      transfers: seedTransfers(),
-      settings: { nextTransferNo: 1043 },
       seedVersion: SEED_VERSION,
     };
   }
@@ -160,19 +121,15 @@ const FleetStorage = (function () {
   function normalize(s) {
     s.vessels = s.vessels || [];
     s.locations = s.locations || [];
-    s.transfers = s.transfers || [];
-    s.settings = s.settings || {};
-    if (s.settings.nextTransferNo == null) s.settings.nextTransferNo = 1000;
+    // Transfers were retired in the redesign: catering now deducts straight
+    // from the fridge it pulls from, so there is no ledger to keep.
+    delete s.transfers;
+    delete s.settings;
     s.locations.forEach((l) => {
       if (!Array.isArray(l.holds)) l.holds = ["food", "bev"];
       if (l.canCook == null) l.canCook = l.kind === "kitchen";
       if (!l.short) l.short = l.name;
       if (l.vesselId === undefined) l.vesselId = null;
-    });
-    s.transfers.forEach((t) => {
-      t.lines = t.lines || [];
-      if (!t.status) t.status = "draft";
-      t.lines.forEach((ln) => { if (!ln.kind) ln.kind = "ingredient"; });
     });
     return s;
   }
@@ -217,8 +174,6 @@ const FleetStorage = (function () {
   function all() { return state; }
   function locations() { return state.locations; }
   function vessels() { return state.vessels; }
-  function transfers() { return state.transfers; }
-  function settings() { return state.settings; }
 
   function location(id) { return state.locations.find((l) => l.id === id) || null; }
   function vessel(id) { return state.vessels.find((v) => v.id === id) || null; }
@@ -260,20 +215,12 @@ const FleetStorage = (function () {
     return state.locations.filter((l) => l.vesselId === vesselId);
   }
 
-  function nextTransferRef() {
-    const n = state.settings.nextTransferNo || 1000;
-    state.settings.nextTransferNo = n + 1;
-    save();
-    return "TR-" + n;
-  }
-
   return {
     KEY,
     all, save, resetToDefaults, defaultState, normalize, isValid,
-    locations, vessels, transfers, settings,
+    locations, vessels,
     location, vessel, locationName, locationShort,
     locationsHolding, foodLocations, bevLocations,
     hub, kitchen, bars, galleys, afloat, locationsForVessel,
-    nextTransferRef,
   };
 })();

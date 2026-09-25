@@ -1,16 +1,9 @@
-/* catering/calc.js — pure math for the catering program. No DOM in here.
+/* catering/calc.js — pure math for the food program. No DOM in here.
 
-   Two things make this different from a single-kitchen cost sheet:
-
-   1. Every on-hand and par figure is a map of locationId -> quantity. A helper
-      that used to read `ing.onHandQty` now reads `onHandAt(ing, locId)`, and
-      the master figure the fleet cares about is `onHandTotal(ing)`.
-
-   2. Servings do not only come from raw ingredients. The kitchen produces
-      batches ahead of service, those batches ride out to the boats, and a boat
-      cannot cook. So "how many can we serve at the Belle right now" is a
-      question about prepared portions sitting in the Belle's galley, not about
-      chicken in a walk-in five miles away. `servingsAt()` answers it that way. */
+   Every on-hand and par figure is a map of locationId -> quantity, read with
+   `onHandAt(ing, locId)`; the master figure is `onHandTotal(ing)`. An event
+   is costed from its dishes' recipes, and stocked by `planPull()`, which
+   decides which fridge each ingredient is grabbed from. */
 
 const CateringCalc = (function () {
   const BASE_UNITS = {
@@ -177,15 +170,6 @@ const CateringCalc = (function () {
     return { portions: Math.floor(best), limitedBy, unlimited: false };
   }
 
-  // ---------- prepared batches ----------
-  // A batch is one production run: made on a date, good for so many days, with
-  // its portions spread across wherever they were sent.
-  function batchPortionsAt(batch, locId) { return qtyAt(batch && batch.portions, locId); }
-  function batchPortionsTotal(batch) { return qtyTotal(batch && batch.portions); }
-  function batchPortionsIn(batch, scope) {
-    return scope ? batchPortionsAt(batch, scope) : batchPortionsTotal(batch);
-  }
-
   function parseDate(str) {
     if (!str) return null;
     const d = new Date(str + (String(str).length <= 10 ? "T00:00:00" : ""));
@@ -195,64 +179,6 @@ const CateringCalc = (function () {
   function todayISO() {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-  }
-
-  function expiryDate(batch) {
-    const made = parseDate(batch && batch.producedOn);
-    if (!made) return null;
-    const days = Number(batch.shelfLifeDays);
-    if (!days && days !== 0) return null;
-    const d = new Date(made.getTime());
-    d.setDate(d.getDate() + days);
-    return d;
-  }
-
-  // Whole days from today until the batch is past its date. Negative is expired.
-  function daysLeft(batch, now) {
-    const exp = expiryDate(batch);
-    if (!exp) return null;
-    const ref = parseDate(now || todayISO());
-    return Math.round((exp.getTime() - ref.getTime()) / 86400000);
-  }
-
-  function batchState(batch, now) {
-    const left = daysLeft(batch, now);
-    if (left == null) return "ok";
-    if (left < 0) return "expired";
-    if (left === 0) return "today";
-    if (left <= 1) return "soon";
-    return "ok";
-  }
-
-  function batchValue(batch, portionCost) {
-    return batchPortionsTotal(batch) * (Number(portionCost) || 0);
-  }
-
-  // Prepared portions of a recipe that are still good, in a given scope.
-  function preparedServings(recipeId, batches, scope, now) {
-    return (batches || [])
-      .filter((b) => b.recipeId === recipeId && batchState(b, now) !== "expired")
-      .reduce((s, b) => s + batchPortionsIn(b, scope), 0);
-  }
-
-  // The headline availability number. At a location that cannot cook, the only
-  // servings that exist are the prepared ones already there — the raw stock in
-  // a boat galley is garnish and bread, not a dish. At the kitchen (or across
-  // the fleet, where the kitchen's capacity is part of the pool) prepared
-  // portions and raw capacity both count.
-  function servingsAt(recipe, resolveIngredient, batches, scope, opts) {
-    const o = opts || {};
-    const prepared = preparedServings(recipe.id, batches, scope, o.now);
-    const canCook = scope ? !!o.canCook : true;
-    const raw = canCook ? rawServings(recipe, resolveIngredient, scope) : { portions: 0, limitedBy: null, unlimited: false };
-    return {
-      prepared,
-      raw: raw.portions,
-      total: prepared + raw.portions,
-      limitedBy: raw.limitedBy,
-      canCook,
-      unlimited: raw.unlimited && canCook,
-    };
   }
 
   // ---------- requirements ----------
@@ -298,6 +224,38 @@ const CateringCalc = (function () {
     const pack = packBaseQty(req.ingredient);
     const packs = short > 0 && pack > 0 ? Math.ceil(short / pack) : 0;
     return { onHandQty: onHand, shortQty: short, packs, buyCost: packs * (Number(req.ingredient.purchaseCost) || 0) };
+  }
+
+  // ---------- pulling stock for an event ----------
+  // Which fridge to grab from. `candidates` is [{ locId, have }] in order of
+  // preference (the event's own location first, if it has one). One trip
+  // beats two: if any single place can cover the whole amount, take it all
+  // from there — the first such place in preference order, else the one with
+  // the most. Only when no place can cover it alone is it split, largest
+  // first. Whatever is left over is the shopping list.
+  function planPull(needQty, candidates) {
+    const need = Math.max(0, Number(needQty) || 0);
+    const pool = (candidates || []).filter((c) => (Number(c.have) || 0) > 0);
+    if (need <= 0) return { picks: [], short: 0 };
+    const whole = pool.find((c, i) => i === 0 && c.preferred && c.have >= need)
+      || pool.slice().sort((a, b) => b.have - a.have).find((c) => c.have >= need);
+    if (whole) return { picks: [{ locId: whole.locId, qty: need }], short: 0 };
+    let left = need;
+    const picks = [];
+    pool.slice().sort((a, b) => (b.preferred ? 1 : 0) - (a.preferred ? 1 : 0) || b.have - a.have).forEach((c) => {
+      if (left <= 0) return;
+      const take = Math.min(left, c.have);
+      picks.push({ locId: c.locId, qty: take });
+      left -= take;
+    });
+    return { picks, short: Math.max(0, left) };
+  }
+
+  // Whole purchase packs needed to cover a shortfall, and what they cost.
+  function packsFor(ing, shortQty) {
+    const pack = packBaseQty(ing);
+    const packs = shortQty > 0 && pack > 0 ? Math.ceil(shortQty / pack - 1e-9) : 0;
+    return { packs, cost: packs * (Number(ing.purchaseCost) || 0) };
   }
 
   // ---------- orders ----------
@@ -347,6 +305,7 @@ const CateringCalc = (function () {
 
   function pluralize(w) {
     if (/[^aeiou]y$/i.test(w)) return w.slice(0, -1) + "ies";
+    if (/(oa|ea|l)f$/i.test(w)) return w.slice(0, -1) + "ves";
     if (/(s|x|z|ch|sh)$/i.test(w)) return w + "es";
     return w + "s";
   }
@@ -384,9 +343,8 @@ const CateringCalc = (function () {
     inventoryValueAt, inventoryValueTotal, inventoryValueIn, usableOnHandIn,
     portionsPerBatch, recipeBatchCost, recipeCost, componentQtyPerPortion,
     suggestedPrice, foodCostPct, grossProfit, marginPct, rawServings,
-    batchPortionsAt, batchPortionsTotal, batchPortionsIn, expiryDate, daysLeft,
-    batchState, batchValue, preparedServings, servingsAt, parseDate, todayISO,
-    portionRequirements, aggregateRequirements, shortfall,
+    parseDate, todayISO,
+    portionRequirements, aggregateRequirements, shortfall, planPull, packsFor,
     orderPortions, lineProjection, periodProjection, daysOfCover,
     fmtMoney, fmtMoney0, fmtPct, fmtNum, fmtQty, unitLabel, fmtBaseQty, fmtDate, uid,
   };

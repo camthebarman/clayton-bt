@@ -5,126 +5,87 @@
    js/brand.js. NOTHING ELSE CARRIES A COLOR OR A COMPANY NAME.
    ═══════════════════════════════════════════════════════════════════════
 
-   styles.css never states a color of its own. It works entirely in the
-   tokens below, so swapping this file re-skins every tab, every pill, the
-   masthead mark and the favicon together. js/brand.js reads several of these
-   values back out at runtime, which is why they are real custom properties
-   on :root rather than hard-coded anywhere else.
+   styles.css never states a colour of its own. It works entirely in the
+   tokens below, so swapping this file re-skins every page, pill, meter,
+   the masthead mark and the favicon together. js/brand.js reads the
+   --mark-* values back out at runtime to draw the logo.
 
-   ── Where this palette comes from ──────────────────────────────────────
+   ── The look ───────────────────────────────────────────────────────────
 
-   Clayton sits on the St. Lawrence at the head of the Thousand Islands, and
-   it is the home of the Antique Boat Museum. So the source material is not
-   generic nautical navy: it is a varnished mahogany hull with brass
-   hardware, sitting on green-blue river water, against a white painted
-   transom and the pink-grey granite of the Frontenac Arch.
+   A dark instrument panel: near-black river water for surfaces, hairline
+   borders instead of shadows, and colour spent only where it carries
+   meaning. Cyan is the house and the channel markers; Food runs green, Bar
+   runs amber, so every number on screen says which program it belongs to
+   before you read the label.
 
-   That gives the interface its one structural idea — cool surfaces, warm
-   accents. The paper is river haze; the money, the metal and the wood are
-   warm. Catering is island pine, Bar is varnished mahogany, Fleet is the
-   river itself.
-
-   Every foreground/background pair below meets WCAG AA (4.5:1) on text.
-   If you change one, re-check it; the numbers in the comments are the
-   measured ratios, not aspirations. */
+   Text pairs are checked against --surface (#0f1720): --ink is 15.9:1,
+   --ink-soft 7.0:1, and every state colour is above 7:1. --ink-faint
+   (4.6:1) is for labels only, never for a figure someone acts on. */
 
 :root {
-  /* ---- surfaces: river haze, cool, so warm accents read as warm ---- */
-  --bg: #eef1f2;
-  --surface: #ffffff;
-  --surface-alt: #dfe6e8;
-  --border: #cdd7da;
-  --accent-soft: #e8eef0;
+  /* ---- surfaces ---- */
+  --bg: #080c11;
+  --bg-glow: rgba(56, 189, 248, 0.07);
+  --grid-line: rgba(148, 163, 184, 0.045);
+  --surface: #0f1720;
+  --surface-2: #131d28;
+  --surface-3: #192532;
+  --hover: rgba(148, 163, 184, 0.06);
+  --border: #1d2a37;
+  --border-strong: #2a3b4d;
 
-  /* ---- ink: deep river rather than a flat black ---- */
-  --ink: #122730;        /* 15.5:1 on white */
-  --ink-soft: #51656e;   /*  6.1:1 on white, 4.8:1 on --surface-alt */
+  /* ---- ink ---- */
+  --ink: #e6edf3;
+  --ink-soft: #9aabbb;
+  --ink-faint: #6b7d8f;
 
-  /* ---- the house brand: the St. Lawrence channel ---- */
-  --brand: #0f4a5f;      /*  9.7:1 with white */
-  --brand-dark: #0a3546;
-  --accent: #8f6724;     /* brass hardware, 5.1:1 on white */
+  /* ---- the house: channel-marker cyan ---- */
+  --brand: #38bdf8;
+  --brand-soft: rgba(56, 189, 248, 0.12);
+  --brand-line: rgba(56, 189, 248, 0.45);
+  --on-brand: #04131d;
+
+  /* ---- the two programs ---- */
+  --food: #34d399;
+  --food-soft: rgba(52, 211, 153, 0.12);
+  --food-line: rgba(52, 211, 153, 0.45);
+  --bar: #fbbf24;
+  --bar-soft: rgba(251, 191, 36, 0.12);
+  --bar-line: rgba(251, 191, 36, 0.45);
 
   /* ---- states ---- */
-  --good: #2b6a52;
-  --good-bg: #e3efe9;
-  --warn: #8a6208;
-  --warn-bg: #fbf0d9;
-  --danger: #a8322a;
-  --danger-bg: #fae9e7;
+  --good: #4ade80;
+  --good-bg: rgba(74, 222, 128, 0.12);
+  --warn: #fbbf24;
+  --warn-bg: rgba(251, 191, 36, 0.13);
+  --danger: #fb7185;
+  --danger-bg: rgba(251, 113, 133, 0.13);
+  --row-warn: rgba(251, 191, 36, 0.035);
+  --row-bad: rgba(251, 113, 133, 0.05);
 
-  /* A whole row washed at pill strength shouts; and on a good prep list most
-     rows qualify, so shouting stops meaning anything. These are the same hues
-     at about a third the saturation — the pill in the status column is what
-     carries the signal, the row just groups it. */
-  --row-warn: #fdf7ec;
-  --row-bad: #fdf3f2;
-
-  /* ---- stock states, shared by both programs' count sheets ---- */
-  --afloat: #12606b;     /* anything aboard a boat */
-  --afloat-bg: #e0eff0;
-  --hub: #4b4b86;        /* central storage */
-  --hub-bg: #eaeaf4;
-  --chill: #20627f;      /* prepared food: chilled */
-  --chill-bg: #e2eef3;
-  --frozen: #3a5a94;
-  --frozen-bg: #e6ebf6;
-  --hot: #9c4526;        /* hot hold */
-  --hot-bg: #f8e8e2;
-
-  /* Text that sits on a --brand fill. White works for every colour in this
-     file; a lighter brand would need this darkened, which is exactly why it
-     is a token and not nine hard-coded #fff. */
-  --on-brand: #ffffff;
-  --toast-bg: #102b35;
+  --overlay: rgba(3, 6, 10, 0.72);
+  --toast-bg: #e6edf3;
+  --toast-ink: #080c11;
 
   /* ---- shape and type ---- */
-  --radius: 10px;
-  --shadow: 0 1px 3px rgba(12, 39, 48, 0.09), 0 1px 2px rgba(12, 39, 48, 0.06);
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --radius: 14px;
+  --radius-sm: 9px;
+  --shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
-  /* ---- the mark ---- */
-  /* js/brand.js reads these to draw the masthead mark and the favicon, so
-     the logo re-colors with the palette instead of going stale. */
-  --mark-field: #0f4a5f;   /* the hull's water */
-  --mark-hull: #ffffff;    /* the painted hull */
-  --mark-trim: #c08f3e;    /* the brass sheer stripe */
+  /* ---- the mark ----
+     js/brand.js reads these to draw the masthead mark and the favicon. */
+  --mark-field: #0b2233;
+  --mark-hull: #e6edf3;
+  --mark-trim: #38bdf8;
 
-  color-scheme: light;
+  color-scheme: dark;
   font-family: var(--font-sans);
 }
 
-/* Each tool restates --brand on its own wrapper, so the three read as
-   distinct without three stylesheets fighting each other. All three are
-   drawn from the same dock: pine, mahogany, river. */
-.mod-catering {
-  --brand: #2b6a52;        /* island pine, 6.4:1 with white */
-  --brand-dark: #1f5040;
-  --accent: #8f6724;
-  --good: #2b6a52;
-  --good-bg: #e3efe9;
-}
-.mod-bar {
-  --brand: #8a4523;        /* varnished mahogany, 7.1:1 with white */
-  --brand-dark: #6d3519;
-  --accent: #12606b;
-  --good: #2b6a52;
-  --good-bg: #e3efe9;
-}
-.mod-fleet {
-  --brand: #0f4a5f;        /* the river — the fleet is the spine, so it
-                              carries the house colour itself */
-  --brand-dark: #0a3546;
-  --accent: #8f6724;
-  --good: #2b6a52;
-  --good-bg: #e3efe9;
-}
-.mod-agent {
-  --brand: #41566b;        /* Frontenac granite, 7.6:1 with white */
-  --brand-dark: #31424f;
-  --accent: #8f6724;
-}
-.mod-catering .section-btn.active,
-.mod-bar .section-btn.active,
-.mod-fleet .section-btn.active,
-.mod-agent .section-btn.active { border-bottom-color: var(--brand); }
+/* A page restates --accent for its program, so buttons, active chips and
+   meters pick up the right colour without a second stylesheet. */
+.accent-house { --accent: var(--brand); --accent-soft: var(--brand-soft); --accent-line: var(--brand-line); }
+.accent-food  { --accent: var(--food);  --accent-soft: var(--food-soft);  --accent-line: var(--food-line); }
+.accent-bar   { --accent: var(--bar);   --accent-soft: var(--bar-soft);   --accent-line: var(--bar-line); }
